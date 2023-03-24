@@ -64,9 +64,10 @@ A *naive forecast* is the most recent value of the time series; in the case of a
 naive.pred <- naive(train.ts, h = nValid)
 snaive.pred <- snaive(train.ts, h = nValid)
 
-plot(amtrak.ts, ylab = "Ridership", xlab = "Time")
+plot(amtrak.ts, ylab = "Ridership", xlab = "Time", xlim = c(1991, 2002))
 lines(naive.pred$mean, lty = 3, lwd = 2, col = "red")
 lines(snaive.pred$mean, lty = 3, lwd = 2, col = "blue")
+abline(v = 2001.25, lty = 2)
 ```
 
 ## Measuring Predictive Accuracy
@@ -148,17 +149,31 @@ The `SouvenirSales.csv` dataset contains monthly sales data for a souvenir shop 
 - Plot a histogram of the errors for **the validation period** from the naive forecasts.
 - Plot a time plot for the naive forecasts, with actual sales numbers in the validation period. What conclusions can you draw about the behaviour of the forecasts?
 
-```{r task, eval = FALSE}
+```{r task}
 svs <- read.csv("data/SouvenirSales.csv") #read in file
-svs.ts <- ts(, start = c(), end = c(), frequency = ) #convert to ts
+svs.ts <- ts(svs[,2], start = c(1995, 1), end = c(2001, 12), frequency = 12) #convert to ts
 
 #Partition into train and validation periods
+nValid = 12
+nTrain = length(svs.ts) - nValid
+svs.train <- window(svs.ts, start = c(1995, 1), end = c(1995, nTrain))
+svs.valid <- window(svs.ts, start = c(1995, nTrain +1), end = c(1995, nTrain + nValid))
 
 #Perform a naive and seasonal naive forecast
+svs.naive <- naive(svs.train, h = nValid)
+svs.snaive <- snaive(svs.train, h = nValid)
 
 #Compute RMSE and MAPE for naive forecasts
+accuracy(svs.naive, svs.valid)
+accuracy(svs.snaive, svs.valid)
 
 #Histogram of errors
+hist(svs.valid - svs.naive$mean, main = "Naive Forecast", ylab = "errors")
+hist(svs.valid - svs.snaive$mean, main = "Seasonal Naive Forecast", ylab = "errors")
 
 #Time plot of forecasts
+plot(svs.ts, ylab = "Sales", xlab = "Time", xlim = c(2001, 2002))
+lines(svs.naive$mean, lty = 3, lwd = 2, col = "red")
+lines(svs.snaive$mean, lty = 3, lwd = 2, col = "blue")
+abline(v = 2001, lty = 2)
 ```
