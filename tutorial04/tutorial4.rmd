@@ -26,6 +26,7 @@ The basic principles of time series regression will be familiar to you from cros
 amtrak <- read.csv("data/Amtrak.csv") #read in data
 amtrak.ts <- ts(amtrak$Ridership, start = c(1991, 1), end = c(2004, 3), frequency = 12)
 
+# .35 increase in the variable passengers 
 train.ts <- window(amtrak.ts, end = c(1991, length(amtrak.ts) - 36)) #create a training set
 
 train.lm <- tslm(train.ts ~ trend) #the `trend` argument includes the time index as a linear predictor
@@ -53,7 +54,7 @@ lines(window(amtrak.ts, start = c(1991, length(amtrak.ts) - 35), end = c(1991, l
 To model a non-linear trend, we simply adjust the formula, as we would using the `lm()` function.
 
 ```{r nonlinear regression}
-train.lm.e <- tslm(train.ts ~ trend, lambda = 0) #to model an exponential trend, we set the lambda argument to zero (a value of 1 is linear)
+train.lm.e <- tslm(train.ts ~ trend, lambda = 0) #to model an exponential trend, we set the lambda argument to zero (a value of 1 is linear) it will transfor our data 
 
 train.lm.poly <- tslm(train.ts ~ trend + I(trend^2)) #to model a quadratic trend, we add the squared term.
 ```
@@ -104,7 +105,7 @@ train.lm.sm.pred <- forecast(train.lm.sm, h = 36, level = 0)
 accuracy(train.lm.sm.pred, amtrak.ts)
 ```
 
-In this case, adding smooth seasonality reduces the accuracy of the model.
+In this case, adding smooth seasonality reduces the accuracy of the model. 
 
 ## Autocorrelation and autoregressive (AR) models
 
@@ -191,6 +192,38 @@ The `SouvenirSales` time series contains monthly sales for a souvenir shop at a 
 svs <- read.csv("data/SouvenirSales.csv") #read in file
 svs.ts <- ts(svs[,2], start = c(1995, 1), end = c(2001, 12), frequency = 12) #convert to ts
 
-svs.train <- window(svs.ts, start = , end = )
-
+svs.train <- window(svs.ts, start = c(1995, 1), end = c(2001, 12))
+autoplot(svs.train)
 ```
+
+
+```{r souvenir sales, eval = FALSE}
+ggAcf(svs.train)
+```
+```{r}
+#train.lm.e <- tslm(train.ts ~ trend, lambda = 0)
+BoxCox.lambda(svs.train)
+```
+
+
+```{r}
+
+svs.train.ARIMA.pred <- svs.train %>% 
+  auto.arima(lambda = 0.015) %>% 
+  forecast(h = 12)
+
+checkresiduals(svs.train.ARIMA.pred)
+```
+
+
+
+```{r}
+accuracy(svs.train.ARIMA.pred, svs.train)
+
+plot(svs.train.ARIMA.pred, ylim = c(1300, 2600), ylab = "Ridership", xlab = "Time", 
+     bty = "l", xaxt = "n", xlim = c(1991, 2006.25), main = "", flty = 2)
+axis(1, at = seq(1991, 2006, 1), labels = format(seq(1991, 2006, 1)))
+lines(svs.train.ARIMA.pred$fitted, lwd = 2, col = "blue")
+lines(window(amtrak.ts, start = c(1991, length(svs.train) - 35), end = c(1991, length(svs.train))))
+```
+

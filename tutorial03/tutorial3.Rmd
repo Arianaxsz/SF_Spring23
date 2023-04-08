@@ -24,7 +24,7 @@ Data-driven methods, by contrast, use algorithms to "learn" patterns from the da
 
 A moving average is a simple smoother which averages time series values across a window (*w*) of consecutive periods. 
 
-- *Centred moving averages* are used to visualise trends, because the averaging suppresses the effects of seasonality and noise in the data. 
+- *Centered moving averages* are used to visualise trends, because the averaging suppresses the effects of seasonality and noise in the data. 
 
 - *Trailing moving averages* are used for forecasting: because we do not know values for future dates, the window is an average of prior values.
 
@@ -32,7 +32,7 @@ A moving average is a simple smoother which averages time series values across a
 amtrak <- read.csv("data/Amtrak.csv") #read in data
 amtrak.ts <- ts(amtrak$Ridership, start = c(1991, 1), end = c(2004, 3), frequency = 12)
 
-# the forecast package contains a function, ma(), for calculating centred moving averages
+# the forecast package contains a function, ma(), for calculating centered moving averages
 ma.centred <- ma(amtrak.ts, 
                  order = 12 # this is the window argument
               )
@@ -44,7 +44,7 @@ ma.trailing <- rollmean(amtrak.ts,
 # we can plot these using autoplot() and autolayer(), which is less verbose than base plot
 autoplot(amtrak.ts) +
   autolayer(ma.centred) +
-  autolayer(ma.trailing)
+  autolayer(ma.trailing) 
 ```
 
 Note: when used for forecasting, a trailing moving average of *w* = 1 will produce a naive forecast, while *w* = *n* (the length of the training period) will average over the entire training period. Moving average forecasts are necessarily horizontal lines.
@@ -118,7 +118,7 @@ autoplot(train.ses) +
   autolayer(fitted(train.ses))
 ```
 
-## Advanced Exponential Smoothing
+## Advanced Exponential Smoothing *are theses errors or are these trends?* 
 
 Exponential smoothing can be adapted for data with both trend and seasonality, in order to create more accurate forecasts. In order to learn more about the precise modalities, please consult the course textbook, pp. 90-98. In general, it is important to know that **error**, **trend** and **seasonality** can all be modelled differently:
 
@@ -149,9 +149,53 @@ accuracy(snaive(train.ts, h = 36), amtrak.ts)
 The file `ApplianceShipments.csv` contains the series of quarterly shipments (in millions of USD) of US household appliances between 1985 and 1989.
 
 a) Create a time series object from the data and produce a well-formatted plot.
+```{r}
+
+as <- read_csv("data/ApplianceShipments.csv") 
+
+as.ts <- ts(as[,-c(1,3,4)], start = c(1985,1), frequency = 4)
+print(as.ts)
+
+autoplot(as.ts) +
+  labs(title = "Quarterly shipment  ") +
+  ylab(" Shipments 📦 ") + xlab ("Years")
+```
+
 
 b) Use different exploratory methods to check the data for trend and seasonality. Which method of forecasting would be most suitable to this data?
 
+```{r}
+asts.subset <- window(as.ts, start = 1985, end = c(1989,4))
+autoplot(asts.subset) +
+  autolayer(meanf(asts.subset, h=11), PI=FALSE, series="Mean") +
+  autolayer(naive(asts.subset, h=11), PI=FALSE, series="Naïve") +
+  autolayer(snaive(asts.subset, h=11), PI=FALSE, series="Seasonal") + 
+  ggtitle("Forecasts for quarterly shipment") +
+  xlab("Year") + ylab("Shipment") +
+  guides(colour=guide_legend(title="Forecast"))
+
+# the forecast package contains a function, ma(), for calculating centered moving averages
+as.centred <- ma(as.ts, 
+                 order = 12 # this is the window argument
+              )
+# the zoo package contains a function, rollmean(), for calculating a trailing moving average
+as.trailing <- rollmean(as.ts,
+                        k = 12, # this is the window argument
+                        align = "right" # this sets to trailing average
+                        )
+# we can plot these using autoplot() and autolayer(), which is less verbose than base plot
+autoplot(as.ts) +
+  autolayer(as.centred) +
+  autolayer(as.trailing) 
+
+```
+
 c) Create a moving average time plot of the data, with a window span, *w*, of 4.
+
+```{r}
+
+
+```
+
 
 d) Using the last four quarters as a validation period, run the `ets()` function. What model does it select? Plot a timeplot of the predicted values against actual values. Check the residuals of the model and the accuracy.
